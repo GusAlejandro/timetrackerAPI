@@ -22,7 +22,7 @@ conn = psycopg2.connect("host=localhost dbname=dev user=dev password=" + config[
 Base.metadata.create_all(db_engine)
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)
 user_schema = UserSchema()
 creds_schema = CredentialsSchema()
 
@@ -72,6 +72,7 @@ def register_user():
     
     """
     raw_credentials = {"username": request.get_json()["username"], "password": request.get_json()["password"]}
+    print(raw_credentials)
     try:
         # deserializes into object, checking validations
         creds = creds_schema.load(raw_credentials)
@@ -122,8 +123,9 @@ def login_user():
             access_token = User.encode_auth_token(TokenType.ACCESS_TOKEN.value, user.id, user.username)
             refresh_token = User.encode_auth_token(TokenType.REFRESH_TOKEN.value, user.id, user.username)
             response = make_response({"status": "succesful Log In"}, 200)
-            response.set_cookie('access', access_token, httponly=True)
-            response.set_cookie('refresh', refresh_token, httponly=True)
+            response.set_cookie('access', access_token, httponly=True, samesite='none', secure=True)
+            response.set_cookie('refresh', refresh_token, httponly=True, samesite='none', secure=True)
+            
             return response
         else:
             
